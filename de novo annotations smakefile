@@ -1,0 +1,43 @@
+configfile: "config/config.yaml"
+
+rule all:
+    input:
+        "results/repeatmasker/genome_masked.fa",
+        "results/braker/annotation.gff3"
+
+rule build_db:
+    input:
+        "data/genome_assembly.fa"
+    output:
+        "results/repeatmodeler/sample_genome_db.nsq"
+    shell:
+        "BuildDatabase -name results/repeatmodeler/sample_genome_db -engine ncbi {input}"
+
+rule repeatmodeler:
+    input:
+        db="results/repeatmodeler/sample_genome_db.nsq"
+    output:
+        "results/repeatmodeler/consensi.fa.classified"
+    shell:
+        "RepeatModeler -database results/repeatmodeler/sample_genome_db -pa 8 -LTRStruct > results/repeatmodeler/repeatmodeler.log"
+
+rule repeatmasker:
+    input:
+        genome="data/genome_assembly.fa",
+        lib="results/repeatmodeler/consensi.fa.classified"
+    output:
+        masked="results/repeatmasker/genome_masked.fa",
+        gff="results/repeatmasker/repeatmasker.gff"
+    shell:
+        "RepeatMasker -pa 8 -lib {input.lib} -gff -xsmall -dir results/repeatmasker {input.genome}"
+
+rule braker:
+    input:
+        genome="results/repeatmasker/genome_masked.fa",
+        proteins="data/proteins.fa"
+    output:
+        "results/braker/annotation.gff3"
+    shell:
+        "singularity exec braker3.sif braker.pl --genome={input.genome} --species=pb --prot_seq={input.proteins} \
+         --rnaseq_sets_ids=S001A93_ID1,S001E7A_ID2,21dpi_ID3,7dpi_ID4 \
+         --rnaseq_sets_dirs=./data/rnaseq --threads 20 --busco_lineage eukaryota_odb10 &> results/braker/braker.log"
