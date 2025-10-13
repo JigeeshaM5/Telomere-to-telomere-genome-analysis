@@ -33,3 +33,29 @@ RUN pip3 install compleasm
 WORKDIR /app
 COPY . .
 ENTRYPOINT ["snakemake"]
+
+
+
+---
+
+### 🐳 `Dockerfile`
+
+```Dockerfile
+FROM ubuntu:22.04
+
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    git \
+    wget \
+    build-essential \
+    ncbi-blast+ \
+    repeatmasker \
+    repeatmodeler
+
+# Install Snakemake
+RUN pip3 install snakemake
+
+WORKDIR /app
+COPY . .
+ENTRYPOINT ["snakemake"]
