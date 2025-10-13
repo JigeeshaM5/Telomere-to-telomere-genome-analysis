@@ -1,5 +1,33 @@
-Hybrid Genome Assembly: PacBio Hifi and Oxford Nanopore reads were utilized for hybrid genome assembly using Hifiasm and polished the final assembly with Illumina reads.
+# Hybrid Genome Assembly Pipeline
 
-Genome Annotations: BRAKER3 pipeline was used that incorporates with GeneMark-ETP + Augustus to train the model with RNASeq and protein evidence to perform the de-novo annotation, followed by TSEBRA mediated integration of both sets to improve accuracy.
+This pipeline performs hybrid genome assembly using PacBio HiFi and Oxford Nanopore reads, followed by polishing and post-assembly analysis. It is implemented using **Snakemake** and **Docker** for reproducibility.
 
-Software Installation and Execution: Singularity was used to install/execute the BRAKER3 docker container.
+## 🧬 Pipeline Steps
+
+1. **Convert PacBio CCS BAM to FASTQ**
+   - Uses `pbindex` and `bam2fastq` from PacBio toolkit
+
+2. **Filter Oxford Nanopore Reads**
+   - Uses `chopper` to remove reads < 3kb
+
+3. **Hybrid Assembly with Hifiasm**
+   - Combines HiFi and ONT reads
+   - Outputs GFA and FASTA files
+
+4. **Polishing with Illumina Reads**
+   - Quality control with FastQC
+   - Adapter trimming with Trimmomatic
+   - Polishing with Hapo-G
+
+5. **Post-Assembly Analysis**
+   - Assembly quality with QUAST
+   - Genome completeness with Compleasm (BUSCO)
+
+## ⚙️ Usage
+
+### Build Docker Image
+
+
+docker build -t hybrid_assembly .
+
+docker run -v $(pwd):/app hybrid_assembly snakemake --cores 4
