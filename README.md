@@ -31,3 +31,27 @@ This pipeline performs hybrid genome assembly using PacBio HiFi and Oxford Nanop
 docker build -t hybrid_assembly .
 
 docker run -v $(pwd):/app hybrid_assembly snakemake --cores 4
+
+# Genome Annotation Pipeline
+
+This pipeline performs de novo genome annotation of the canola genome using RepeatModeler, RepeatMasker, and BRAKER3.
+
+## 🧬 Pipeline Steps
+
+1. **Repeat Prediction and Masking**
+   - Build genome database
+   - Predict repeats with RepeatModeler
+   - Mask repeats with RepeatMasker
+
+2. **Annotation with BRAKER3**
+   - Uses masked genome, reference proteome, and RNA-seq data
+   - Outputs GFF3 annotation file
+
+## ⚙️ Usage
+
+### Build Docker Image
+
+
+docker build -t genome_annotation .
+
+docker run -v $(pwd):/app genome_annotation snakemake --cores 4
