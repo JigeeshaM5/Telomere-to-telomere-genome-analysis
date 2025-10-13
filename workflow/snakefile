@@ -1,0 +1,81 @@
+configfile: "config/config.yaml"
+
+rule all:
+    input:
+        "results/hifiasm/hybrid_assembly.fa",
+        "results/polishing/hapog_polished.fa",
+        "results/analysis/quast/report.txt",
+        "results/analysis/compleasm/summary.txt"
+
+rule convert_ccs:
+    input:
+        "data/pacbio.ccs.bam"
+    output:
+        "results/fastq/pacbio_hifi.fastq"
+    shell:
+        "pbindex {input} && bam2fastq -o {output} {input}"
+
+rule filter_ont:
+    input:
+        "data/ont_reads.fastq.gz"
+    output:
+        "results/fastq/ont_filtered.fastq.gz"
+    shell:
+        "gunzip -c {input} | chopper -l 3000 | gzip > {output}"
+
+rule hifiasm:
+    input:
+        hifi="results/fastq/pacbio_hifi.fastq",
+        ont="results/fastq/ont_filtered.fastq.gz"
+    output:
+        gfa="results/hifiasm/hybrid_assembly.gfa",
+        fa="results/hifiasm/hybrid_assembly.fa"
+    shell:
+        "hifiasm -l0 --hg-size 25.5m -u 0 -o results/hifiasm/hybrid_assembly -t32 --ul {input.ont} {input.hifi} && awk '/^S/{{print \">\"$2;print $3}}' {output.gfa} > {output.fa}"
+
+rule fastqc:
+    input:
+        "data/illumina_R1.fastq.gz",
+        "data/illumina_R2.fastq.gz"
+    output:
+        "results/qc/illumina_fastqc.html"
+    shell:
+        "fastqc -t 10 {input} -o results/qc"
+
+rule trimmomatic:
+    input:
+        r1="data/illumina_R1.fastq.gz",
+        r2="data/illumina_R2.fastq.gz"
+    output:
+        r1p="results/trimmed/R1_paired.fastq.gz",
+        r1u="results/trimmed/R1_unpaired.fastq.gz",
+        r2p="results/trimmed/R2_paired.fastq.gz",
+        r2u="results/trimmed/R2_unpaired.fastq.gz"
+    shell:
+        "java -jar /prg/trimmomatic/0.39/trimmomatic-0.39.jar PE -threads 10 {input.r1} {input.r2} {output.r1p} {output.r1u} {output.r2p} {output.r2u} ILLUMINACLIP:/adapters/adapters.fa:2:30:10 MINLEN:50"
+
+rule hapog:
+    input:
+        genome="results/hifiasm/hybrid_assembly.fa",
+        pe1="results/trimmed/R1_paired.fastq.gz",
+        pe2="results/trimmed/R2_paired.fastq.gz"
+    output:
+        "results/polishing/hapog_polished.fa"
+    shell:
+        "/prg/hapog/1.2/hapog.py --genome {input.genome} --pe1 {input.pe1} --pe2 {input.pe2} -o results/polishing/hapog_polished -t 10 -u"
+
+rule quast:
+    input:
+        "results/polishing/hapog_polished.fa"
+    output:
+        "results/analysis/quast/report.txt"
+    shell:
+        "quast.py {input} -o results/analysis/quast"
+
+rule compleasm:
+    input:
+        "results/polishing/hapog_polished.fa"
+    output:
+        "results/analysis/compleasm/summary.txt"
+    shell:
+        "python -m compleasm run -a {input} -o results/analysis/compleasm -t 30 -l eukaryota"
