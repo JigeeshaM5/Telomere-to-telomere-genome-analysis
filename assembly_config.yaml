@@ -1,0 +1,6 @@
+genome_assembly: "data/genome_assembly.fa"
+proteins: "data/proteins.fa"
+rnaseq_sets:
+  ids: ["S001A93_ID1", "S001E7A_ID2", "21dpi_ID3", "7dpi_ID4"]
+  dirs: "data/rnaseq"
+busco_lineage: "eukaryota_odb10"
