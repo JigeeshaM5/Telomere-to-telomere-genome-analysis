@@ -1,0 +1,5 @@
+pacbio_ccs: "data/pacbio.ccs.bam"
+ont_reads: "data/ont_reads.fastq.gz"
+illumina_r1: "data/illumina_R1.fastq.gz"
+illumina_r2: "data/illumina_R2.fastq.gz"
+adapters: "/adapters/adapters.fa"
